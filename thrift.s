@@ -15,9 +15,17 @@ _start:
 	lea buf, %rsi
     	mov $5000, %rdx
 	syscall
-	mov $4,%rax #find 4th
-	call findnl
-	nop
+	
+	# return rax: void* findl(rax: ln_no, rbp: *buffer);
+	mov $4,%rax
+	lea buf,%rbp
+	call findnl 		
+	
+	mov %rax,%rsi
+	mov $1, %rax
+	mov $1, %rdi
+	mov $1, %rdx 
+	syscall
 
 exit:
 	mov $60, %rax
@@ -33,25 +41,27 @@ findnl:
 # rdi: buff counter
 # r10: new line counter
 
-	lea buf, %rbp 
+	dec %rax
 	mov $0,%r10 #count nls found
 	mov %rax,%r9
 	# start counter for max limit
 	mov $0,%rdi    
 	mov $5000,%rsi
 	lo:
-		addq $1,%rbp
-		addq $1,%rdi 
+		inc %rbp
+		inc %rdi 
 		cmp %rsi,%rdi
 	    	je err
 		movb (%rbp), %al
 		movb $0x0A,%ah
 		cmp %ah,%al
 	jne lo
+
 	addq $1,%r10
 	cmp %r9,%r10
 	jne lo
 	mov %rbp,%rax
+	inc %rax
 	ret
 
 	err:
