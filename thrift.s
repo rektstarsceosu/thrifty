@@ -3,18 +3,19 @@
 
 _start:
     # open meminfo
-    mov $2, %rax
+    	mov $2, %rax
 	mov $file, %rdi
 	mov $0, %rsi
 	mov $2, %rdx
 	syscall
     
 	# read
-    mov %rax, %rdi
-    mov $0, %rax
+    	mov %rax, %rdi
+	mov $0, %rax
 	lea buf, %rsi
-    mov $5000, %rdx
+    	mov $5000, %rdx
 	syscall
+	mov $4,%rax #find 4th
 	call findnl
 	nop
 
@@ -24,7 +25,17 @@ exit:
 	syscall
 
 findnl:
+# rbp: buffer*
+# input rax & r9: line no 
+# rax->ah: \n constant
+# rax->al: current byte
+# rsi: buff size
+# rdi: buff counter
+# r10: new line counter
+
 	lea buf, %rbp 
+	mov $0,%r10 #count nls found
+	mov %rax,%r9
 	# start counter for max limit
 	mov $0,%rdi    
 	mov $5000,%rsi
@@ -32,12 +43,14 @@ findnl:
 		addq $1,%rbp
 		addq $1,%rdi 
 		cmp %rsi,%rdi
-	    je err
+	    	je err
 		movb (%rbp), %al
 		movb $0x0A,%ah
 		cmp %ah,%al
 	jne lo
-
+	addq $1,%r10
+	cmp %r9,%r10
+	jne lo
 	mov %rbp,%rax
 	ret
 
