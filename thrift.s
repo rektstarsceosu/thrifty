@@ -15,8 +15,9 @@ _start:
 	lea buf, %rsi
     	mov $5000, %rdx
 	syscall
-	
-	# return rax: void* findl(rax: ln_no, rbp: *buffer);
+
+	mov %rax,%r11 # for limiting maximum bytes to check in function findnl
+
 	mov $4,%rax
 	lea buf,%rbp
 	call findnl 		
@@ -26,41 +27,43 @@ _start:
 	mov $1, %rdi
 	mov $1, %rdx 
 	syscall
-
+	
+	call realprint
+	
 exit:
 	mov $60, %rax
 	xor %rdi, %rdi
 	syscall
 
-findnl:
-# rbp: buffer*
-# input rax & r9: line no 
-# rax->ah: \n constant
-# rax->al: current byte
-# rsi: buff size
-# rdi: buff counter
+findnl: # rax: void* findnl(rax: count,rbx *buffer);
+# input rax: count
+# out rax: linetop pointer
+# rbp: buffer pointer
+# ch: \n constant
+# cl: current byte
+# r11: max buff size
+# rdi: buff limit counter
 # r10: new line counter
 
 	dec %rax
-	mov $0,%r10 #count nls found
-	mov %rax,%r9
-	# start counter for max limit
-	mov $0,%rdi    
-	mov $5000,%rsi
+	mov $0,%r10
+	mov $0,%rdi
 	lo:
 		inc %rbp
 		inc %rdi 
-		cmp %rsi,%rdi
+		cmp %r11,%rdi
 	    	je err
-		movb (%rbp), %al
-		movb $0x0A,%ah
-		cmp %ah,%al
+		movb (%rbp), %cl
+		movb $0x0A, %ch
+		cmp %ch, %cl
+	jne lo
+	
+	# check if we reached requested line count
+	inc %r10
+	cmp %rax, %r10
 	jne lo
 
-	addq $1,%r10
-	cmp %r9,%r10
-	jne lo
-	mov %rbp,%rax
+	mov %rbp, %rax
 	inc %rax
 	ret
 
@@ -69,6 +72,12 @@ findnl:
 		ret
 	nop
 
+realprint: # rax int realprint(rax: *buffer);
+
+	#%rax
+	
+	ret
+	
 .section .rodata
 file:
 	.asciz "/proc/meminfo\0"
